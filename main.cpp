@@ -1,0 +1,107 @@
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <iostream>
+
+const int SIZE = 1024;          // Size of Buffers
+char receiveBuff[SIZE];         // Buffer to send to the server
+char sendBuff[SIZE];            // Buffer to receive from server
+char pasvBuff[] = "pasv";       // Buffer to see if PASV Command was entered
+char quitBuff[] = "QUIT";       // Buffer to see if QUIT Command was entered
+char pasvMessage[100];          // String for PASV information
+char userLogin[] = "USER ";
+char passLogin[] = "PASS ";
+char username[] = "ftpuser";
+char password[] = "12345678";
+
+#define FTP_PORT 21
+#define FTP_ADDR 192.168.1.10
+
+int main(){
+    int length = 0, i=0;
+    int a1, a2, a3, a4, p1, p2, dataPort;       //PASV Information
+
+    // Add Server Information
+    struct sockaddr_in server_addr;             // Internet address of server
+    memset(&server_addr, 0, sizeof(server_addr));   // Clear structure
+    server_addr.sin_family = AF_INET;           // Set address typedef
+    memcpy(&server_addr.sin_addr, FTP_ADDR, sizeof(FTP_ADDR));
+    server_addr.sin_port = htons(FTP_PORT);     // Use FTP port
+
+    // Create Socket to Connect to FTP Server
+    int commSock = socket(AF_INET, SOCK_STREAM, 0); // Command socket in client
+
+    // Connect to FTP Server on Port 21
+    connect(commSock, (struct sockaddr *)&server_addr, sizeof(server_addr);
+
+    // Get Connect Message
+    read(commSock, receiveBuff, sizeof(receiveBuff)-1);
+    
+	// Create login information
+	strcat(userLogin, username);
+	strcat(userLogin, "\r\n");
+	strcat(passLogin, password);
+	strcat(passLogin, "\r\n");
+
+	// Write login information to server
+	memset(receiveBuff, 0, SIZE);
+	write(commSock, userLogin, strlen(userLogin));
+	if(read(commSock, receiveBuff, sizeof(receiveBuff)-1) <0);	//Implement error handling
+
+	memset(receiveBuff, 0, SIZE);
+	write(commSock, passLogin, strlen(passLogin));
+	if(read(commSock, receiveBuff, sizeof(receiveBuff)-1) <0);	//Implement error handling
+	
+	/*	A valid connection should be established now
+		The commSock is made to send commands to the server */
+	
+
+    do
+    {
+        /* Clear Buffers */
+        memset(receiveBuff, 0, SIZE);
+        memset(sendBuff, 0, SIZE);
+
+        write(fileno(stdout), "Please enter a FTP Command: ", 28);      // Write User Interface
+        read(fileno(stdin), sendBuff, SIZE);                            // Read Command from User
+        send(origSock, sendBuff, strlen(sendBuff) , 0);                 // Send Command to Server
+
+        read(origSock, receiveBuff, sizeof(receiveBuff) - 1);           // Read Response from Server
+        write(fileno(stdout), receiveBuff, sizeof(receiveBuff) - 1);    // Print Response from Server to screen
+
+        /* If PASV Command was Entered */
+        if (strncmp(sendBuff, pasvBuff, 4) == 0)
+        {
+            sscanf(receiveBuff, "227 Entering Passive Mode (%d,%d,%d,%d,%d,%d)", &a1,&a2,&a3,&a4,&p1,&p2);
+            dataPort = (p1 * 256) + p2;
+
+            struct sockaddr_in servAdr2;                // Internet address of server
+            memset(&servAdr2, 0, sizeof(servAdr2));     // Clear structure
+            servAdr2.sin_family = AF_INET;              // Set address typedef
+            memcpy(&servAdr2.sin_addr, host->h_addr, host->h_length);
+            servAdr.sin_port = htons(dataPort);         // Use FTP port
+
+            /* Create Socket to Connect to FTP Server */
+            int dataSock;                               // Data socket in client
+            if ((dataSock = socket(PF_INET, SOCK_STREAM, 0)) < 0)
+            {
+                perror("Client: generate error");
+                return 3;
+            }
+
+            /* Connect to FTP Server on Data Port */
+            if (connect(dataSock, (struct sockaddr *)&servAdr, sizeof(servAdr)) < 0)
+            {
+                perror("Client: connect error");
+                return 4;
+            }
+
+            read(dataSock, receiveBuff, sizeof(receiveBuff) - 1);
+            write(fileno(stdout), receiveBuff, sizeof(receiveBuff) - 1);
+        }
+
+    } while (strncmp(sendBuff, quitBuff, 4) != 0);      // Go until QUIT Command is entered
+
+    close(origSock);
+
+    return 0;
+}
