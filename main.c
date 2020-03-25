@@ -64,7 +64,7 @@ int main(){
 		//Implement error handling here
 		printf("%s\n", "failed to connect to socket");
 	}
-
+	
     //Get connection succesful message
     if((read(commSock, receiveBuff, sizeof(receiveBuff)-1)) < 0){
 		//Implement error handling here
@@ -72,6 +72,7 @@ int main(){
 	}
 	write(fileno(stdout), receiveBuff, sizeof(receiveBuff)-1);	//Write server response to stdout
     //Implement error handling on servers response
+	sleep(1);
 	
 	//Create login information
 	strcat(userLogin, username);
@@ -86,16 +87,18 @@ int main(){
 		//Implement error handling
 		printf("%s\n","failed to read from commSock after username send");
 	}
-	
-	memset(receiveBuff, 0, SIZE);
-	write(commSock, passLogin, strlen(passLogin));
-	if((read(commSock, receiveBuff, sizeof(receiveBuff)-1)) <0){
-		//Implement error handling
-		printf("%s\n", "failed to read from commSock after password send");
+	write(fileno(stdout), receiveBuff, sizeof(receiveBuff)-1);
+	if(strncmp(receiveBuff, "331", 3)){
+		memset(receiveBuff, 0, SIZE);
+		write(commSock, passLogin, strlen(passLogin));
+		sleep(1);
+		if((read(commSock, receiveBuff, sizeof(receiveBuff)-1)) <0){
+			//Implement error handling
+			printf("%s\n", "failed to read from commSock after password send");
+		}
 	}
 	write(fileno(stdout), receiveBuff, sizeof(receiveBuff)-1);	//Write server response to stdout
-	
-
+	sleep(1);
 
 	//Implement error handling on server response here
 	//Maybe server responds with "230" - standard response for sufficient credentials to grant access to server
@@ -111,6 +114,7 @@ int main(){
 		//Implement error handling here
 		printf("%s\n", "failed to write PASV command to server");
 	}
+	sleep(1);
 
     if((read(commSock, receiveBuff, sizeof(receiveBuff) - 1)) < 0){	//Read Response from Server
 		//Implement error handling here
@@ -118,7 +122,15 @@ int main(){
 	}
 	write(fileno(stdout), receiveBuff, sizeof(receiveBuff) - 1);    //Print Response from Server to screen
 	//Implement error handling on server response 
-
+	
+	memset(receiveBuff, 0, SIZE);
+	send(commSock, "bye", 3, 0);
+	sleep(1);
+	read(commSock, receiveBuff, sizeof(receiveBuff)-1);
+	write(fileno(stdout), receiveBuff, sizeof(receiveBuff)-1);
+	close(commSock);
+	
+	/*
     //If "227" response from server upon sending PASV then create data socket - server ready
     if(strncmp("227", receiveBuff, 3) == 0){
         sscanf(receiveBuff, "227 Entering Passive Mode (%d,%d,%d,%d,%d,%d)", &a1,&a2,&a3,&a4,&p1,&p2);
@@ -182,7 +194,7 @@ int main(){
 		close(dataSock);
 		close(commSock);
     }
-
+	*/
 	//Clean up
 	//free(server_addr);
 	//free(server_addr2);
